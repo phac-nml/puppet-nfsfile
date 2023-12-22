@@ -103,15 +103,6 @@ Puppet::Type.type(:nfsfile).provide(:ruby) do
     create_helper(resource[:path], resource[:manage_as], resource[:directory], resource[:owner], resource[:group], resource[:mode])
   end
 
-  def directory
-    file_exists(resource[:path], resource[:manage_as], true)
-  end
-
-  def directory=(value)
-    remove_file(resource[:path], resource[:manage_as])
-    create_helper(resource[:path], resource[:manage_as], resource[:directory], resource[:owner], resource[:group], resource[:mode])
-  end
-
   def owner
     begin
       user = runuser(['-u', manage_as, '--', 'stat', '--printf=%U', path])
@@ -122,7 +113,7 @@ Puppet::Type.type(:nfsfile).provide(:ruby) do
   end
 
   def owner=(value)
-    set_owner(resource[:path], resource[:manage_as], resource[:owner])
+    set_owner(resource[:path], resource[:manage_as], value)
   end
 
   def group
@@ -135,7 +126,7 @@ Puppet::Type.type(:nfsfile).provide(:ruby) do
   end
 
   def group=(value)
-    set_owner(resource[:path], resource[:manage_as], resource[:group])
+    set_owner(resource[:path], resource[:manage_as], value)
   end
 
   def mode
@@ -148,6 +139,6 @@ Puppet::Type.type(:nfsfile).provide(:ruby) do
   end
 
   def mode=(value)
-    set_owner(resource[:path], resource[:manage_as], resource[:mode])
+    set_owner(resource[:path], resource[:manage_as], value)
   end
 end
