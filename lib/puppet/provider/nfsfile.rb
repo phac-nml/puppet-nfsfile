@@ -1,4 +1,4 @@
-Puppet::Type.type(:nfstype).provide(:ruby) do
+Puppet::Type.type(:nfsfile).provide(:ruby) do
   commands :runuser => '/usr/sbin/runuser'
 
   def create_file(path, manage_as, is_directory)

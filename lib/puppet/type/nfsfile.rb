@@ -1,4 +1,4 @@
-Puppet::Type.newtype(:nfstype) do
+Puppet::Type.newtype(:nfsfile) do
   desc "Puppet type that manages files like the `file` type but can do so as a specific user"
 
   ensurable
