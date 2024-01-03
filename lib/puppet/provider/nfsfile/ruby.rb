@@ -2,16 +2,16 @@
 Puppet::Type.type(:nfsfile).provide(:ruby) do
   commands runuser: '/usr/sbin/runuser'
 
-  def file_exists(path, manage_as, is_directory)
+  def file_exists(path, owner, is_directory)
     if !is_directory
       begin
-        runuser(['-u', manage_as, '--', 'test', '-f', path])
+        runuser(['-u', owner, '--', 'test', '-f', path])
       rescue Puppet::ExecutionFailure
         return false
       end
     else
       begin
-        runuser(['-u', manage_as, '--', 'test', '-d', path])
+        runuser(['-u', owner, '--', 'test', '-d', path])
       rescue Puppet::ExecutionFailure
         return false
       end
@@ -19,38 +19,37 @@ Puppet::Type.type(:nfsfile).provide(:ruby) do
     true
   end
 
-  def remove_file(path, manage_as)
-    runuser(['-u', manage_as, '--', 'rm', '-rf', path])
+  def remove_file(path, owner)
+    runuser(['-u', owner, '--', 'rm', '-rf', path])
   rescue Puppet::ExecutionFailure
     nil
   end
 
   def exists?
-    file_exists(resource[:path], resource[:manage_as], resource[:directory])
+    file_exists(resource[:path], resource[:owner], resource[:directory])
   end
 
   def destroy
-    remove_file(path, manage_as)
+    remove_file(path, owner)
   end
 
   def create
     # create the file
     if !resource[:directory]
-      runuser(['-u', resource[:manage_as], '--', 'touch', resource[:path]])
+      runuser(['-u', resource[:owner], '--', 'touch', resource[:path]])
     else
-      runuser(['-u', resource[:manage_as], '--', 'mkdir', resource[:path]])
+      runuser(['-u', resource[:owner], '--', 'mkdir', resource[:path]])
     end
 
     # set file attributes
-    runuser(['-u', resource[:manage_as], '--', 'chown', resource[:owner], resource[:path]]) unless owner.nil?
     unless resource[:group].nil?
-      runuser(['-u', resource[:manage_as], '--', 'chown', ":#{resource[:group]}", resource[:path]])
+      runuser(['-u', resource[:owner], '--', 'chown', ":#{resource[:group]}", resource[:path]])
     end
-    runuser(['-u', resource[:manage_as], '--', 'chmod', resource[:mode], resource[:path]]) unless resource[:mode].nil?
+    runuser(['-u', resource[:owner], '--', 'chmod', resource[:mode], resource[:path]]) unless resource[:mode].nil?
   end
 
   def directory
-    file_exists(resource[:path], resource[:manage_as], true) ? 'true' : 'false'
+    file_exists(resource[:path], resource[:owner], true) ? 'true' : 'false'
   end
 
   # this will fail because changing between a directory and a file is destructive
@@ -58,33 +57,23 @@ Puppet::Type.type(:nfsfile).provide(:ruby) do
     raise 'Cannot switch between directory and file'
   end
 
-  def owner
-    runuser(['-u', resource[:manage_as], '--', 'stat', '--printf=%U', resource[:path]])
-  rescue Puppet::ExecutionFailure
-    nil
-  end
-
-  def owner=(value)
-    runuser(['-u', resource[:manage_as], '--', 'chown', value, resource[:path]])
-  end
-
   def group
-    runuser(['-u', resource[:manage_as], '--', 'stat', '--printf=%G', resource[:path]])
+    runuser(['-u', resource[:owner], '--', 'stat', '--printf=%G', resource[:path]])
   rescue Puppet::ExecutionFailure
     nil
   end
 
   def group=(value)
-    runuser(['-u', resource[:manage_as], '--', 'chown', ":#{value}", resource[:path]])
+    runuser(['-u', resource[:owner], '--', 'chown', ":#{value}", resource[:path]])
   end
 
   def mode
-    runuser(['-u', resource[:manage_as], '--', 'stat', '--printf=0%a', resource[:path]])
+    runuser(['-u', resource[:owner], '--', 'stat', '--printf=0%a', resource[:path]])
   rescue Puppet::ExecutionFailure
     nil
   end
 
   def mode=(value)
-    runuser(['-u', resource[:manage_as], '--', 'chmod', value, resource[:path]])
+    runuser(['-u', resource[:owner], '--', 'chmod', value, resource[:path]])
   end
 end
