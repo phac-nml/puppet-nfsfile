@@ -2,24 +2,6 @@
 Puppet::Type.type(:nfsfile).provide(:ruby) do
   commands runuser: '/usr/sbin/runuser'
 
-  def set_owner(path, manage_as, owner)
-    runuser(['-u', manage_as, '--', 'chown', owner, path])
-  rescue Puppet::ExecutionFailure => e
-    Puppet.debug("#set_owner had an error -> #{e.inspect}")
-  end
-
-  def set_group(path, manage_as, group)
-    runuser(['-u', manage_as, '--', 'chown', ":#{group}", path])
-  rescue Puppet::ExecutionFailure => e
-    Puppet.debug("#set_group had an error -> #{e.inspect}")
-  end
-
-  def set_mode(path, manage_as, mode)
-    runuser(['-u', manage_as, '--', 'chmod', mode, path])
-  rescue Puppet::ExecutionFailure => e
-    Puppet.debug("#set_mode had an error -> #{e.inspect}")
-  end
-
   def file_exists(path, manage_as, is_directory)
     if !is_directory
       begin
@@ -83,7 +65,7 @@ Puppet::Type.type(:nfsfile).provide(:ruby) do
   end
 
   def owner=(value)
-    set_owner(resource[:path], resource[:manage_as], value)
+    runuser(['-u', resource[:manage_as], '--', 'chown', value, resource[:path]])
   end
 
   def group
@@ -93,7 +75,7 @@ Puppet::Type.type(:nfsfile).provide(:ruby) do
   end
 
   def group=(value)
-    set_group(resource[:path], resource[:manage_as], value)
+    runuser(['-u', resource[:manage_as], '--', 'chown', ":#{value}", resource[:path]])
   end
 
   def mode
@@ -103,6 +85,6 @@ Puppet::Type.type(:nfsfile).provide(:ruby) do
   end
 
   def mode=(value)
-    set_mode(resource[:path], resource[:manage_as], value)
+    runuser(['-u', resource[:manage_as], '--', 'chmod', value, resource[:path]])
   end
 end
