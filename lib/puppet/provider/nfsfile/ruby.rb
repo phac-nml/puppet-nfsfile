@@ -1,22 +1,27 @@
 # frozen_string_literal: true
+
 Puppet::Type.type(:nfsfile).provide(:ruby) do
   commands runuser: '/usr/sbin/runuser'
 
-  def file_exists(path, owner, is_directory)
-    if !is_directory
-      begin
-        runuser(['-u', owner, '--', 'test', '-f', path])
-      rescue Puppet::ExecutionFailure
-        return false
-      end
-    else
-      begin
-        runuser(['-u', owner, '--', 'test', '-d', path])
-      rescue Puppet::ExecutionFailure
-        return false
-      end
-    end
+  def file_exists(path, owner)
+    runuser(['-u', owner, '--', 'test', '-f', path])
     true
+  rescue Puppet::ExecutionFailure
+    false
+  end
+
+  def dir_exists(path, owner)
+    runuser(['-u', owner, '--', 'test', '-d', path])
+    true
+  rescue Puppet::ExecutionFailure
+    false
+  end
+
+  def resource_exists(path, owner, is_directory)
+    runuser(['-u', owner, '--', 'test', '-e', path])
+    true
+  rescue Puppet::ExecutionFailure
+    false
   end
 
   def remove_file(path, owner)
@@ -26,7 +31,7 @@ Puppet::Type.type(:nfsfile).provide(:ruby) do
   end
 
   def exists?
-    file_exists(resource[:path], resource[:owner], resource[:directory])
+    resource_exists(resource[:path], resource[:owner], resource[:directory])
   end
 
   def destroy
@@ -35,7 +40,7 @@ Puppet::Type.type(:nfsfile).provide(:ruby) do
 
   def create
     # create the file
-    if !resource[:directory]
+    if resource[:directory] == :false
       runuser(['-u', resource[:owner], '--', 'touch', resource[:path]])
     else
       runuser(['-u', resource[:owner], '--', 'mkdir', resource[:path]])
@@ -49,7 +54,7 @@ Puppet::Type.type(:nfsfile).provide(:ruby) do
   end
 
   def directory
-    file_exists(resource[:path], resource[:owner], true) ? 'true' : 'false'
+    dir_exists(resource[:path], resource[:owner]) ? :true : :false
   end
 
   # this will fail because changing between a directory and a file is destructive
