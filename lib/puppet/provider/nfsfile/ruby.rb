@@ -2,24 +2,6 @@
 Puppet::Type.type(:nfsfile).provide(:ruby) do
   commands runuser: '/usr/sbin/runuser'
 
-  def create_dir(path, manage_as)
-    runuser(['-u', manage_as, '--', 'mkdir', path])
-  rescue Puppet::ExecutionFailure => e
-    Puppet.debug("#create_file had an error -> #{e.inspect}")
-  end
-
-  def create_file(path, manage_as, is_directory)
-    if !is_directory
-      begin
-        runuser(['-u', manage_as, '--', 'touch', path])
-      rescue Puppet::ExecutionFailure => e
-        Puppet.debug("#create_file had an error -> #{e.inspect}")
-      end
-    else
-      create_dir(path, manage_as)
-    end
-  end
-
   def set_owner(path, manage_as, owner)
     runuser(['-u', manage_as, '--', 'chown', owner, path])
   rescue Puppet::ExecutionFailure => e
@@ -61,13 +43,6 @@ Puppet::Type.type(:nfsfile).provide(:ruby) do
     nil
   end
 
-  def create_helper(path, manage_as, directory, owner, group, mode)
-    create_file(path, manage_as, directory)
-    set_owner(path, manage_as, owner) unless owner.nil?
-    set_group(path, manage_as, group) unless group.nil?
-    set_mode(mode, manage_as, mode) unless mode.nil?
-  end
-
   def exists?
     file_exists(resource[:path], resource[:manage_as], resource[:directory])
   end
@@ -77,20 +52,27 @@ Puppet::Type.type(:nfsfile).provide(:ruby) do
   end
 
   def create
-    create_helper(resource[:path],
-                  resource[:manage_as],
-                  resource[:directory],
-                  resource[:owner],
-                  resource[:group],
-                  resource[:mode])
+    # create the file
+    if !resource[:directory]
+      runuser(['-u', resource[:manage_as], '--', 'touch', resource[:path]])
+    else
+      runuser(['-u', resource[:manage_as], '--', 'mkdir', resource[:path]])
+    end
+
+    # set file attributes
+    runuser(['-u', resource[:manage_as], '--', 'chown', resource[:owner], resource[:path]]) unless owner.nil?
+    unless resource[:group].nil?
+      runuser(['-u', resource[:manage_as], '--', 'chown', ":#{resource[:group]}", resource[:path]])
+    end
+    runuser(['-u', resource[:manage_as], '--', 'chmod', resource[:mode], resource[:path]]) unless resource[:mode].nil?
   end
 
   def directory
     file_exists(resource[:path], resource[:manage_as], true) ? 'true' : 'false'
   end
 
+  # this will fail because changing between a directory and a file is destructive
   def directory=(_)
-    # this should never be called
     raise 'Cannot switch between directory and file'
   end
 
