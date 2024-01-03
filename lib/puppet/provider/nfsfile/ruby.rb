@@ -1,5 +1,6 @@
+# frozen_string_literal: true
 Puppet::Type.type(:nfsfile).provide(:ruby) do
-  commands :runuser => '/usr/sbin/runuser'
+  commands runuser: '/usr/sbin/runuser'
 
   def create_dir(path, manage_as)
     runuser(['-u', manage_as, '--', 'mkdir', path])
@@ -88,6 +89,11 @@ Puppet::Type.type(:nfsfile).provide(:ruby) do
     file_exists(resource[:path], resource[:manage_as], true) ? 'true' : 'false'
   end
 
+  def directory=(_)
+    # this should never be called
+    raise 'Cannot switch between directory and file'
+  end
+
   def owner
     runuser(['-u', resource[:manage_as], '--', 'stat', '--printf=%U', resource[:path]])
   rescue Puppet::ExecutionFailure
@@ -105,7 +111,7 @@ Puppet::Type.type(:nfsfile).provide(:ruby) do
   end
 
   def group=(value)
-    set_owner(resource[:path], resource[:manage_as], value)
+    set_group(resource[:path], resource[:manage_as], value)
   end
 
   def mode
@@ -115,6 +121,6 @@ Puppet::Type.type(:nfsfile).provide(:ruby) do
   end
 
   def mode=(value)
-    set_owner(resource[:path], resource[:manage_as], value)
+    set_mode(resource[:path], resource[:manage_as], value)
   end
 end
