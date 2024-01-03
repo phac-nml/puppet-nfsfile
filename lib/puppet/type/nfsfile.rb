@@ -9,9 +9,9 @@ Puppet::Type.newtype(:nfsfile) do
     desc 'The path to the file to manage. Must be fully qualified.'
   end
 
-  newproperty(:directory) do
-    desc 'Whether this file is a directory or not'
-    newvalues(:true, :false)
+  newproperty(:resource_type) do
+    desc 'The type of resource being managed'
+    newvalues(:file, :directory)
   end
 
   newparam(:owner) do

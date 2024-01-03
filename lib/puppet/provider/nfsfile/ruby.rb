@@ -17,7 +17,7 @@ Puppet::Type.type(:nfsfile).provide(:ruby) do
     false
   end
 
-  def resource_exists(path, owner, is_directory)
+  def resource_exists(path, owner)
     runuser(['-u', owner, '--', 'test', '-e', path])
     true
   rescue Puppet::ExecutionFailure
@@ -31,7 +31,7 @@ Puppet::Type.type(:nfsfile).provide(:ruby) do
   end
 
   def exists?
-    resource_exists(resource[:path], resource[:owner], resource[:directory])
+    resource_exists(resource[:path], resource[:owner])
   end
 
   def destroy
@@ -40,9 +40,10 @@ Puppet::Type.type(:nfsfile).provide(:ruby) do
 
   def create
     # create the file
-    if resource[:directory] == :false
+    case resource[:resource_type]
+    when :file
       runuser(['-u', resource[:owner], '--', 'touch', resource[:path]])
-    else
+    when :directory
       runuser(['-u', resource[:owner], '--', 'mkdir', resource[:path]])
     end
 
@@ -53,13 +54,14 @@ Puppet::Type.type(:nfsfile).provide(:ruby) do
     runuser(['-u', resource[:owner], '--', 'chmod', resource[:mode], resource[:path]]) unless resource[:mode].nil?
   end
 
-  def directory
-    dir_exists(resource[:path], resource[:owner]) ? :true : :false
+  def resource_type
+    return :file if file_exists(resource[:path], resource[:owner])
+
+    :directory if dir_exists(resource[:path], resource[:owner])
   end
 
-  # this will fail because changing between a directory and a file is destructive
-  def directory=(_)
-    raise 'Cannot switch between directory and file'
+  def resource_type=(_)
+    raise "Resource #{resource[:path]} already exists."
   end
 
   def group
