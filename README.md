@@ -14,8 +14,8 @@ the `file` resource type with support for managing a file as a specific user
 which is useful on network file systems where `root` doesn't necessarily have
 access to every file. The feature-set is more limited than `file` but new
 features can be added as needed. One major difference from `file` is that
-choosing file/directory is separated from `ensure` (currently as a boolean).
-`owner` also serves as the user which manages the file.
+choosing file/directory is separated from `ensure`. `owner` also serves as the
+user who manages the file.
 
 ## Setup
 
@@ -30,11 +30,12 @@ It can be used as such:
 
 ```puppet
 nfsfile { 'resource title':
-    ensure    => present,
-    directory => true,
-    owner     => service-account,
-    group     => service-group,
-    mode      => '0770',
+    ensure        => present,
+    resource_type => file,
+    directory     => true,
+    owner         => service-account,
+    group         => service-group,
+    mode          => '0770'
 }
 ```
 
