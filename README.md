@@ -15,6 +15,7 @@ which is useful on network file systems where `root` doesn't necessarily have
 access to every file. The feature-set is more limited than `file` but new
 features can be added as needed. One major difference from `file` is that
 choosing file/directory is separated from `ensure` (currently as a boolean).
+`owner` also serves as the user which manages the file.
 
 ## Setup
 
@@ -34,7 +35,6 @@ nfsfile { 'resource title':
     owner     => service-account,
     group     => service-group,
     mode      => '0770',
-    manage_as => service-account,
 }
 ```
 
@@ -44,6 +44,4 @@ in which the directory created is managed by `service-account` instead of root.
 
 The full feature-set of `file` is not supported as of right now. Managing a
 file as a specific user means that Puppet has the same limitations as that user
-while managing the file. This means that setting the owner of the file doesn't
-really do anything (only root can change the owner) and the the group can only
-be changed to one that `manage_as` is a member of.
+while managing the file.
