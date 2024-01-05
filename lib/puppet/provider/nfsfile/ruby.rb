@@ -24,10 +24,9 @@ Puppet::Type.type(:nfsfile).provide(:ruby) do
     false
   end
 
-  def remove_file(path, owner)
-    runuser(['-u', owner, '--', 'rm', '-rf', path])
-  rescue Puppet::ExecutionFailure
-    nil
+  def write_file(owner, content, path)
+    content = content.gsub(/\\/, '\\\\').gsub(/"/, '\\"')
+    runuser(['-l', owner, '-c', "echo -n \"#{content}\" > #{path}"])
   end
 
   def exists?
@@ -35,7 +34,7 @@ Puppet::Type.type(:nfsfile).provide(:ruby) do
   end
 
   def destroy
-    remove_file(path, owner)
+    runuser(['-u', owner, '--', 'rm', '-rf', path])
   end
 
   def create
@@ -52,6 +51,7 @@ Puppet::Type.type(:nfsfile).provide(:ruby) do
       runuser(['-u', resource[:owner], '--', 'chown', ":#{resource[:group]}", resource[:path]])
     end
     runuser(['-u', resource[:owner], '--', 'chmod', resource[:mode], resource[:path]]) unless resource[:mode].nil?
+    write_file(resource[:owner], resource[:content], resource[:path]) unless resource[:content].nil?
   end
 
   def resource_type
@@ -82,5 +82,15 @@ Puppet::Type.type(:nfsfile).provide(:ruby) do
 
   def mode=(value)
     runuser(['-u', resource[:owner], '--', 'chmod', value, resource[:path]])
+  end
+
+  def content
+    runuser(['-u', resource[:owner], '--', 'cat', resource[:path]])
+  rescue Puppet::ExecutionFailure
+    nil
+  end
+
+  def content=(value)
+    write_file(resource[:owner], value, resource[:path])
   end
 end

@@ -14,6 +14,10 @@ Puppet::Type.newtype(:nfsfile) do
     newvalues(:file, :directory)
   end
 
+  newproperty(:content) do
+    desc 'The content of the file'
+  end
+
   newparam(:owner) do
     desc 'The user to whom the file should belong.'
   end
