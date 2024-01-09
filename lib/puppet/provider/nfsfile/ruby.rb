@@ -46,11 +46,16 @@ Puppet::Type.type(:nfsfile).provide(:ruby) do
       runuser(['-u', resource[:owner], '--', 'mkdir', resource[:path]])
     end
 
+    group = runuser(['-u', resource[:owner], '--', 'stat', '--printf=%G', resource[:path]])
+    mode = runuser(['-u', resource[:owner], '--', 'stat', '--printf=0%a', resource[:path]])
+
     # set file attributes
-    unless resource[:group].nil?
+    if !resource[:group].nil? && group != resource[:group]
       runuser(['-u', resource[:owner], '--', 'chown', ":#{resource[:group]}", resource[:path]])
     end
-    runuser(['-u', resource[:owner], '--', 'chmod', resource[:mode], resource[:path]]) unless resource[:mode].nil?
+    if !resource[:mode].nil? && mode != resource[:mode]
+      runuser(['-u', resource[:owner], '--', 'chmod', resource[:mode], resource[:path]])
+    end
     write_file(resource[:owner], resource[:content], resource[:path]) unless resource[:content].nil?
   end
 
