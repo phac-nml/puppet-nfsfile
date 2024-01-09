@@ -32,10 +32,10 @@ It can be used as such:
 nfsfile { 'resource title':
     ensure        => present,
     resource_type => file,
-    directory     => true,
     owner         => service-account,
     group         => service-group,
-    mode          => '0770'
+    mode          => '0770',
+    content       => 'File contents'
 }
 ```
 
