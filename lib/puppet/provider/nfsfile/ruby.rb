@@ -26,7 +26,7 @@ Puppet::Type.type(:nfsfile).provide(:ruby) do
 
   def write_file(owner, content, path)
     content = content.gsub(/\\/, '\\\\').gsub(/"/, '\\"')
-    runuser(['-l', owner, '-c', "echo -n \"#{content}\" > #{path}"])
+    runuser(['-l', owner, '-c', "echo -n '#{content}' > #{path}"])
   end
 
   def exists?
